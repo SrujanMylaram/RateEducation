@@ -19,7 +19,6 @@ exports.login = (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: 'Invalid credentials (wrong password)' });
 
-    // 🔐 Ensure role matches
     if (role && user.role !== role) {
       return res.status(403).json({ message: `Access denied. You are not an ${role}.` });
     }
@@ -44,21 +43,17 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // 1️⃣ Validate input
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
-    // 2️⃣ Check if email already exists
     const [existing] = await db.promise().query('SELECT * FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
       return res.status(400).json({ message: 'Email is already registered' });
     }
 
-    // 3️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4️⃣ Insert into database
     const [result] = await db
       .promise()
       .query(
@@ -66,7 +61,6 @@ exports.register = async (req, res) => {
         [name, email, hashedPassword, role || 'student']
       );
 
-    // 5️⃣ Return success response
     const user = {
       id: result.insertId,
       name,
